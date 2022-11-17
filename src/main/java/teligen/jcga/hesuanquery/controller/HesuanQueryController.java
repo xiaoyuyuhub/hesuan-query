@@ -34,33 +34,32 @@ public class HesuanQueryController {
     HesuanQueryService hesuanQueryService;
 
     /**
-     * @param xm
      * @param sfzh
      * @return
      * @author xuyu
+     *
      * @date 20221116
      * @des
      */
     @RequestMapping("/hesuanquery")
-    public ModelAndView hesuanQuery(String xm, String sfzh) {
+    public ModelAndView hesuanQuery(String sfzh) {
         ModelAndView modelAndView = new ModelAndView("hesuan-query");
-        modelAndView.addObject("xm", xm);
         modelAndView.addObject("sfzh", sfzh);
         List<HesuanEntity> returnList;
 
-        if (!StrUtil.isBlank(xm) && !StrUtil.isBlank(sfzh)) {
+        if (!StrUtil.isBlank(sfzh)) {
             try {
-                logger.info("========接收到请求xm=" + xm + "。身份证号码=" + sfzh + "。开始处理========");
-                returnList = hesuanQueryService.hesuanQuery(xm, sfzh);
+                logger.info("========接收到请求身份证号码=" + sfzh + "。开始处理========");
+                returnList = hesuanQueryService.hesuanQuery(sfzh);
                 modelAndView.addObject("hesuanList", returnList);
                 modelAndView.addObject("code", "200");
                 modelAndView.addObject("msg", "success");
-                logger.info("========请求xm=" + xm + "。身份证号码=" + sfzh + "。处理结束========");
+                logger.info("========请求身份证号码=" + sfzh + "。处理结束========");
             } catch (Exception e) {
                 e.printStackTrace();
                 modelAndView.addObject("code", "400");
                 modelAndView.addObject("msg", "查询失败，失败原因可能为市局核酸系统接口故障，请稍后在尝试或者联系ADSI系统管理员");
-                logger.error("========请求xm=" + xm + "。身份证号码=" + sfzh + "。处理失败，请查看日志========");
+                logger.error("========请求身份证号码=" + sfzh + "。处理失败，请查看日志========");
             }
         }
 

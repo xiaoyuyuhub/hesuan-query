@@ -3,6 +3,7 @@ package teligen.jcga.hesuanquery.service;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.CharsetUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.Header;
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpUtil;
@@ -41,24 +42,22 @@ public class HesuanQueryService {
     public String USER_NAME;
 
     /**
-     * @param xm
      * @param sfzh
      * @author xuyu
      * @des 查询核酸功能
      * @date 20221115
      */
-    public List<HesuanEntity> hesuanQuery(String xm, String sfzh) throws Exception {
+    public List<HesuanEntity> hesuanQuery(String sfzh) throws Exception {
 
         String res = "";
         //构建请求body
         JSONObject jsonObject = new JSONObject();
         jsonObject.set("queryIdCard", sfzh);
-        jsonObject.set("queryName", xm);
         jsonObject.set("userId", USER_ID);
         jsonObject.set("userIdCard", USERID_CARD);
         jsonObject.set("userName", USER_NAME);
 
-        logger.info("========开始发送请求,xm=" + xm + "。身份证号码=" + sfzh + "。========");
+        logger.info("========开始发送请求身份证号码=" + sfzh + "。========");
         //构建第一次请求发送
         res = HttpRequest.post(SEND_REQ_URL)
                 .header("appid", APPID)
@@ -68,19 +67,13 @@ public class HesuanQueryService {
                 .header("Postman-Token", UUID.fastUUID().toString())
                 .header(Header.ACCEPT, "*/*")
                 .header(Header.CACHE_CONTROL, "no-cache")
-                .header(Header.HOST, "77.27.70.1")
                 .removeHeader(Header.ACCEPT_LANGUAGE)
                 .header(Header.CONNECTION, "keep-alive")
                 .body(jsonObject.toString())
                 .timeout(20000)
                 .execute().body();
-        logger.info("========开始发送请求,xm=" + xm + "。身份证号码=" + sfzh + "。结束，返回" + res + "========");
+        logger.info("========开始发送请求身份证号码=" + sfzh + "。结束，返回" + res + "========");
 
-//        res = "{\n" +
-//                "\t\"flag\":true,\n" +
-//                "\t\"message\":\"操作成功\",\n" +
-//                "\t\"data\":{\"code\":\"10\",\"msg\":\"requestid=asdasdasdasdasdasd\"}\n" +
-//                "}";
         //判断是否响应成功
         JSONObject j2 = JSONUtil.parseObj(res);
         if (!j2.get("message").toString().equals("操作成功")) {
@@ -100,34 +93,35 @@ public class HesuanQueryService {
         j3.set("userIdCard", USERID_CARD);
         j3.set("userName", USER_NAME);
 
-        logger.info("========延时10秒========");
-        //延时10秒钟，调用第二次请求
-        Thread.sleep(10000);
-
-        //构建带参数请求,市局发送请求需要在url后面带参数
         String params = "?requestId=" + requestId + "&userId=" + USER_ID + "&userIdCard=" + USERID_CARD + "&userName=" + USER_NAME;
         String URL2 = GET_RESULT_URL + params;
-        logger.info("========开始发送第二次请求,xm=" + xm + "。身份证号码=" + sfzh + "。请求地址url=" + URL2 + "========");
+        String res1=null;
 
-        HttpRequest httpRequest = HttpRequest.post(URL2)
-                .header("appid", APPID)
-                .header("roleid", ROLEID)
-                .header(Header.CONTENT_TYPE, "application/json")
-                .header(Header.USER_AGENT, "PostmanRuntime/7.16.3")
-                .header("Postman-Token", UUID.fastUUID().toString())
-                .header(Header.ACCEPT, "*/*")
-                .header(Header.CACHE_CONTROL, "no-cache")
-                .header(Header.HOST, "77.27.70.1")
-                .removeHeader(Header.ACCEPT_LANGUAGE)
-                .header(Header.CONNECTION, "keep-alive")
-                .body(j3.toString())
-                .timeout(20000);
-        logger.info("========开始发送第二次请求,xm=" + xm + "。身份证号码=" + sfzh + "。请求res=" + httpRequest.toString() + "========");
-        String res1 = httpRequest.execute().body();
-        logger.info("========发送第二次请求结束,xm=" + xm + "。身份证号码=" + sfzh + "。返回res:" + res1 + "========");
+        //循环120*5s=600s，6分钟，如果6分钟后发送120次还没有结果，便不管了
+        for (int i = 0; i < 120; i++) {
+            logger.info("========延时5s========");
+            Thread.sleep(5000);
+            logger.info("========开始发送第二次请求身份证号码=" + sfzh + "。请求地址url=" + URL2 + "========");
+            HttpRequest httpRequest = HttpRequest.post(URL2)
+                    .header("appid", APPID)
+                    .header("roleid", ROLEID)
+                    .header(Header.CONTENT_TYPE, "application/json")
+                    .header(Header.USER_AGENT, "PostmanRuntime/7.16.3")
+                    .header("Postman-Token", UUID.fastUUID().toString())
+                    .header(Header.ACCEPT, "*/*")
+                    .header(Header.CACHE_CONTROL, "no-cache")
+                    .removeHeader(Header.ACCEPT_LANGUAGE)
+                    .header(Header.CONNECTION, "keep-alive")
+                    .body(j3.toString())
+                    .timeout(20000);
+            res1 = httpRequest.execute().body();
+            logger.info("========发送第二次请求结束身份证号码=" + sfzh + "。返回res:" + res1 + "========");
+            if(!res1.contains("正在查询中")){
+                break;
+            }
+        }
 
         //搭建结果实体类
-//        String res2=FileUtil.readString("c:\\xuyu\\1.txt",CharsetUtil.CHARSET_UTF_8);
         JSONObject j4 = JSONUtil.parseObj(res1);
         List<HesuanEntity> returnList = null;
         JSONArray j5 = j4.get("data", JSONObject.class)

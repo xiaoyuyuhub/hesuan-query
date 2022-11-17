@@ -17,17 +17,14 @@
 <hr/>
 <form class="form-inline text-center" method="post">
     <div class="form-group">
-        <label>查询姓名：</label>
-        <input type="text" class="form-control" th:name="xm" th:value="${xm}" id="xm" placeholder="请输入查询目标姓名">
-    </div>
-    <div class="form-group">
         <label>查询身份证号码：</label>
         <input type="text" class="form-control" th:name="sfzh" th:value="${sfzh}" id="sfzh" placeholder="请输入查询目标身份证号码">
     </div>
+
     <button type="submit" class="btn btn-default" th:onclick="postData()">查询</button>
 
-    <span id="loading" class="loadingcss">
-	<p style='color:#ffffff;font-size:14px;'>正在查询，请稍后……</p>
+    <span id="loading" class="loadingcss" style="background:#ffffff">
+	<p style='color:red;font-size:64px;'>核酸检测结果为异步请求，耗时较长请耐心等待。。。。。。</p>
     </span>
 
 </form>
@@ -77,7 +74,7 @@
 <hr/>
 <!--查询成功，但是未返回数据-->
 <div th:if="${hesuanList == null}">
-    <h1 class="text-center">未查询到数据。。。请重试</h1>
+    <h1 class="text-center"></h1>
 </div>
 
 </body>
@@ -86,13 +83,6 @@
     $(function () {
         $('form').bootstrapValidator({
             fields: {
-                xm: {
-                    validators: {
-                        notEmpty: {
-                            message: '姓名不能为空'
-                        }
-                    }
-                },
                 sfzh: {
                     validators: {
                         notEmpty: {
@@ -107,7 +97,7 @@
     //等待请求时弹出loading框
     function postData() {
         //判断是否输入框都有值，都不为空才弹出loading框
-        if (!($("#xm").val() == undefined || $("#xm").val() == '') && !($("#sfzh").val() == undefined || $("#sfzh").val() == '')) {
+        if (!($("#sfzh").val() == undefined || $("#sfzh").val() == '')) {
             $("#loading").show()
         }
     }
