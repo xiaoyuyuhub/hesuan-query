@@ -47,17 +47,18 @@ public class HesuanQueryService {
      * @des 查询核酸功能
      * @date 20221115
      */
-    public List<HesuanEntity> hesuanQuery(String sfzh) throws Exception {
+    public List<HesuanEntity> hesuanQuery(String xm, String sfzh) throws Exception {
 
         String res = "";
         //构建请求body
         JSONObject jsonObject = new JSONObject();
         jsonObject.set("queryIdCard", sfzh);
+        if (!StrUtil.isBlank(xm)) jsonObject.set("queryName", xm);
         jsonObject.set("userId", USER_ID);
         jsonObject.set("userIdCard", USERID_CARD);
         jsonObject.set("userName", USER_NAME);
 
-        logger.info("========开始发送请求身份证号码=" + sfzh + "。========");
+        logger.info("========开始发送请求,xm=" + xm + "。身份证号码=" + sfzh + "。========");
         //构建第一次请求发送
         res = HttpRequest.post(SEND_REQ_URL)
                 .header("appid", APPID)
@@ -72,7 +73,7 @@ public class HesuanQueryService {
                 .body(jsonObject.toString())
                 .timeout(20000)
                 .execute().body();
-        logger.info("========开始发送请求身份证号码=" + sfzh + "。结束，返回" + res + "========");
+        logger.info("========开始发送请求,xm=" + xm + "。身份证号码=" + sfzh + "。结束，返回" + res + "========");
 
         //判断是否响应成功
         JSONObject j2 = JSONUtil.parseObj(res);
@@ -95,13 +96,13 @@ public class HesuanQueryService {
 
         String params = "?requestId=" + requestId + "&userId=" + USER_ID + "&userIdCard=" + USERID_CARD + "&userName=" + USER_NAME;
         String URL2 = GET_RESULT_URL + params;
-        String res1=null;
+        String res1 = null;
 
         //循环120*5s=600s，6分钟，如果6分钟后发送120次还没有结果，便不管了
         for (int i = 0; i < 120; i++) {
             logger.info("========延时5s========");
             Thread.sleep(5000);
-            logger.info("========开始发送第二次请求身份证号码=" + sfzh + "。请求地址url=" + URL2 + "========");
+            logger.info("========开始发送第二次请求,xm=" + xm + "。身份证号码=" + sfzh + "。请求地址url=" + URL2 + "========");
             HttpRequest httpRequest = HttpRequest.post(URL2)
                     .header("appid", APPID)
                     .header("roleid", ROLEID)
@@ -115,8 +116,8 @@ public class HesuanQueryService {
                     .body(j3.toString())
                     .timeout(20000);
             res1 = httpRequest.execute().body();
-            logger.info("========发送第二次请求结束身份证号码=" + sfzh + "。返回res:" + res1 + "========");
-            if(!res1.contains("正在查询中")){
+            logger.info("========发送第二次请求结束,xm=" + xm + "。身份证号码=" + sfzh + "。返回res:" + res1 + "========");
+            if (!res1.contains("正在查询中")) {
                 break;
             }
         }

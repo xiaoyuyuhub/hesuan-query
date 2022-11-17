@@ -26,7 +26,8 @@ import java.util.UUID;
 @RequestMapping("")
 public class HesuanQueryController {
 
-    private static final String TMP_PATH = "C:/projects/tmp";
+    private static String JAR_PATH= "C:/projects/tmp";;
+
     // 1. 得到日志对象
     private Logger logger = LoggerFactory.getLogger(HesuanQueryController.class);
 
@@ -42,24 +43,25 @@ public class HesuanQueryController {
      * @des
      */
     @RequestMapping("/hesuanquery")
-    public ModelAndView hesuanQuery(String sfzh) {
+    public ModelAndView hesuanQuery(String xm,String sfzh) {
         ModelAndView modelAndView = new ModelAndView("hesuan-query");
         modelAndView.addObject("sfzh", sfzh);
+        modelAndView.addObject("xm", sfzh);
         List<HesuanEntity> returnList;
 
         if (!StrUtil.isBlank(sfzh)) {
             try {
-                logger.info("========接收到请求身份证号码=" + sfzh + "。开始处理========");
-                returnList = hesuanQueryService.hesuanQuery(sfzh);
+                logger.info("========接收到请求xm=" + xm + "。身份证号码=" + sfzh + "。开始处理========");
+                returnList = hesuanQueryService.hesuanQuery(xm, sfzh);
                 modelAndView.addObject("hesuanList", returnList);
                 modelAndView.addObject("code", "200");
                 modelAndView.addObject("msg", "success");
-                logger.info("========请求身份证号码=" + sfzh + "。处理结束========");
+                logger.info("========请求xm=" + xm + "。身份证号码=" + sfzh + "。处理结束========");
             } catch (Exception e) {
                 e.printStackTrace();
                 modelAndView.addObject("code", "400");
                 modelAndView.addObject("msg", "查询失败，失败原因可能为市局核酸系统接口故障，请稍后在尝试或者联系ADSI系统管理员");
-                logger.error("========请求身份证号码=" + sfzh + "。处理失败，请查看日志========");
+                logger.error("========请求xm=" + xm + "。身份证号码=" + sfzh + "。处理失败，请查看日志========");
             }
         }
 
@@ -67,7 +69,7 @@ public class HesuanQueryController {
     }
 
     @PostMapping("/upload")
-    public String upload(@RequestParam("uploadFile") MultipartFile file, HttpServletRequest request, HttpServletResponse response) {
+    public String upload(@RequestParam("uploadFile") MultipartFile file, HttpServletRequest request, HttpServletResponse response) throws InterruptedException {
         if (file.isEmpty()) {
             return "文件为空";
         }
@@ -75,7 +77,7 @@ public class HesuanQueryController {
         // 获取当前时间
         String currentDate = new SimpleDateFormat("/yyyy/MM/dd").format(new Date());
         // 保存文件的目录
-        String folderPath = TMP_PATH + currentDate;
+        String folderPath = JAR_PATH + currentDate;
         System.out.println("保存的路径地址：" + folderPath);
         // 判断是否需要创建目录
         File folderFile = new File(folderPath);
@@ -87,6 +89,8 @@ public class HesuanQueryController {
         String fileName = file.getOriginalFilename();
         fileName = String.valueOf(UUID.randomUUID()).replace("-", "") + fileName.substring(fileName.lastIndexOf("."));
 
+
+        Thread.sleep(10000);
         try {
             File destFile = new File(folderFile, fileName);
             System.out.println(destFile.getAbsolutePath());
