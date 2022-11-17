@@ -1,0 +1,20 @@
+server:
+  port: 7676
+
+spring:
+  thymeleaf:
+    cache: false
+    encoding: UTF-8
+  servlet:
+    multipart:
+      max-file-size: 500MB
+      max-request-size: 500MB
+hesuanquery:
+  sendReqUrl: http://10.154.255.223/fhdaas/api/v1/third/naat/sendReq
+  getResultByIdUrl: http://10.154.255.223/fhdaas/api/v1/third/getResultById
+  appid: "A-500000000000-01220"
+  roleid: "5000001220"
+  userId: "020226"
+  userIdCard: "51022519740327367X"
+  userName: "邓强"
+
