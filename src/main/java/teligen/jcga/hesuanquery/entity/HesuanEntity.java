@@ -82,7 +82,6 @@ public class HesuanEntity implements Comparable<HesuanEntity> {
 
     @Override
     public int compareTo(HesuanEntity o) {
-       // return DateUtil.compare(DateUtil.parseDate(this.getCollectionTime()), DateUtil.parseDate(o.getCollectionTime()));
         return DateUtil.compare(DateUtil.parseDate(o.getCollectionTime()), DateUtil.parseDate(this.getCollectionTime()));
     }
 }

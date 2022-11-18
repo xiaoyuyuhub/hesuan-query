@@ -34,15 +34,20 @@
 <hr/>
 <form id="FileuploadForm" method="POST" action="/upload" enctype="multipart/form-data">
     <div class="form-group">
+        <p class="text-center">
+            <a style="color: red;font-size: 18px" href="/hexuanmuban.xlsx">ADSI批次查询核酸人员模板下载链接.xlsx，请先下载按照示例填写之后上传!!!</a>
+        </p>
+        <hr/>
         <input style="margin: 0 auto 0 auto" type="file" name="uploadFile" id="uploadFile"/>
         <p class="help-block text-center">请上传选择需要批量查询核酸记录的excel文件，请务必先下载模板在模板上修改上传谢谢</p>
     </div>
     <hr/>
     <div class="text-center">
         <input class="btn btn-default text-center" type="button" id="btnUpload" value="上传文件" onclick="upload()"/>
+        <input class="btn btn-default text-center" type="button" id="btnFlush" value="刷新" onclick="retflush()"/>
     </div>
 
-    <div id="msg"></div>
+    <div class="text-center" style="font-size: 20px" id="msg"></div>
     <hr/>
 </form>
 <!--进度条部分(默认隐藏)-->
@@ -58,7 +63,7 @@
     </div>
     <div class="text-center">
         <span style="width: 100px; display: inline-block; text-align: right">上传状态：</span>
-        <span style="width: 300px;color: red" class="progress-info">请选择文件并点击上传文件按钮</span>
+        <span style="width: 300px;color: red;font-size: 20px" class="progress-info">请选择文件并点击上传文件按钮</span>
     </div>
 </div>
 <script>
@@ -69,11 +74,9 @@
         var msgInfo = "";
         if (null == checkFile || "" == checkFile) {
             $("#msg").text("文件为空,请选择文件!");
-        }
-            // else if (!checkFile.endsWith(".xlsx")) {
-            //     $("#msg").text("必须上传后缀为.xlsx文件，需使用office2007之后的版本，请从新选择文件，谢谢");
-        // }
-        else {
+        } else if (!checkFile.endsWith(".xlsx")) {
+            $("#msg").text("必须上传后缀为.xlsx文件，需使用office2007之后的版本，请从新选择文件，请先下载模板文件！谢谢");
+        } else {
             var formData = new FormData(document.getElementById("FileuploadForm"));
             console.log(formData)
             $.ajax({
@@ -89,9 +92,13 @@
                     console.log(result);
                     flag = false;
                     $("#msg").text("访问服务器错误，请重试！");
+                    $('.progress-body .progress-info').html("访问服务器错误，请重试！请稍后再试或者联系ADSI系统管理员谢谢！")
                 },
                 success: function (result) {
-                    console.log("success");
+                    $('.progress-body .progress-info').html("查询完成，请下载下方结果excel文件！感谢下次使用！" +
+                        "<p class='text-center' style='color: red;font-size: 20px'>" +
+                        "<a href=/downfile?filename="+result+">结果文件下载链接.xlsx</a>" +
+                        "</p>");
                 },
                 xhr: function () {
                     var xhr = $.ajaxSettings.xhr();
@@ -145,7 +152,7 @@
         $('.progress-body .progress-speed').html(((e.loaded / 1024) / 1024 / time).toFixed(2) + "M/S, " + ((e.loaded / 1024) / 1024).toFixed(2) + "/" + ((e.total / 1024) / 1024).toFixed(2) + " MB. ");
         $('.progress-body percentage').html(percent.toFixed(2) + "%");
         if (percent == 100) {
-            $('.progress-body .progress-info').html("上传完成,后台正在处理...核酸检测结果为异步请求，耗时较长请耐心等待。。。。。。");
+            $('.progress-body .progress-info').html("上传完成,后台正在处理。核酸检测结果为异步请求，耗时长短取决查询数量多少，耗时较长请耐心等待。。。");
         } else {
             $('.progress-body .progress-info').html("文件上传中...");
         }
@@ -154,7 +161,6 @@
     //上传完成处理函数
     function completeHandle(e) {
         $('.progress-body .progress-info').html("查询完成，请下载结果excel文件！感谢下次使用！");
-        setTimeout(hideProgress, 5000);
     };
 
     //上传出错处理函数
@@ -168,6 +174,10 @@
         $('.progress-body .progress-info').html("上传文件取消。");
         setTimeout(hideProgress, 5000);
     };
+
+    function retflush(){
+        location.reload()
+    }
 </script>
 </body>
 </html>

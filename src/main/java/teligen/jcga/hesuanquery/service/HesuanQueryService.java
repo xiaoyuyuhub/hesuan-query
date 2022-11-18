@@ -2,6 +2,7 @@ package teligen.jcga.hesuanquery.service;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.UUID;
+import cn.hutool.core.thread.ExecutorBuilder;
 import cn.hutool.core.util.CharsetUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.Header;
@@ -14,11 +15,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import teligen.jcga.hesuanquery.entity.ExcelQueryEntity;
 import teligen.jcga.hesuanquery.entity.HesuanEntity;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class HesuanQueryService {
@@ -42,12 +48,14 @@ public class HesuanQueryService {
     public String USER_NAME;
 
     /**
-     * @param sfzh
      * @author xuyu
      * @des 查询核酸功能
      * @date 20221115
      */
-    public List<HesuanEntity> hesuanQuery(String xm, String sfzh) throws Exception {
+    public List<HesuanEntity> hesuanQuery(ExcelQueryEntity excelQueryEntity) throws Exception {
+
+        String xm = excelQueryEntity.getXm();
+        String sfzh = excelQueryEntity.getSfzh();
 
         String res = "";
         //构建请求body
@@ -98,8 +106,8 @@ public class HesuanQueryService {
         String URL2 = GET_RESULT_URL + params;
         String res1 = null;
 
-        //循环120*5s=600s，6分钟，如果6分钟后发送120次还没有结果，便不管了
-        for (int i = 0; i < 120; i++) {
+        //循环60*5s=300s，6分钟，如果6分钟后发送120次还没有结果，便不管了
+        for (int i = 0; i < 60; i++) {
             logger.info("========延时5s========");
             Thread.sleep(5000);
             logger.info("========开始发送第二次请求,xm=" + xm + "。身份证号码=" + sfzh + "。请求地址url=" + URL2 + "========");
@@ -135,6 +143,69 @@ public class HesuanQueryService {
         Collections.sort(returnList);
 
         return returnList;
+    }
+
+    /**
+     * @param excelQueryEntities
+     * @des 处理批量查询核酸
+     */
+    public List<HesuanEntity> getBatchHesuanQuery(List<ExcelQueryEntity> excelQueryEntities) throws InterruptedException {
+
+        List<HesuanEntity> returnList = new CopyOnWriteArrayList<>();
+        Set<ExcelQueryEntity> set = listToSetAndTrim(excelQueryEntities);
+
+        //创建线程池
+        ExecutorService executor = ExecutorBuilder.create()
+                .setCorePoolSize(20)
+                .setMaxPoolSize(60)
+                .setWorkQueue(new LinkedBlockingQueue<>(1000))
+                .build();
+
+        set.forEach(excelQueryEntity -> {
+            executor.submit(new Runnable() {
+                @Override
+                public void run() {
+                    List<HesuanEntity> list = null;
+                    try {
+                        list = hesuanQuery(excelQueryEntity);
+                    } catch (Exception e) {
+                        logger.info("========批量查询有报错，报错实体："+excelQueryEntity.toString()+"========");
+                        e.printStackTrace();
+                    }
+                    list.forEach(hesuanEntity -> {
+                        returnList.add(hesuanEntity);
+                    });
+                }
+            });
+        });
+
+        //停止线程
+        executor.shutdown();
+
+        while (!executor.awaitTermination(20, TimeUnit.SECONDS)){
+        }
+
+        return returnList;
+    }
+
+    /**
+     * @param excelQueryEntities
+     * @return
+     * @des 对实体类进行去重和去空格，返回set
+     */
+    public Set<ExcelQueryEntity> listToSetAndTrim(List<ExcelQueryEntity> excelQueryEntities) {
+        //entity去除前后空格
+        excelQueryEntities.forEach(excelQueryEntity -> {
+            excelQueryEntity.trim();
+        });
+
+        //去重
+        Set<ExcelQueryEntity> set = new HashSet<>();
+        excelQueryEntities.forEach(excelQueryEntity -> {
+            set.add(excelQueryEntity);
+        });
+
+        return set;
     }
 
     public static void main(String[] args) throws FileNotFoundException {
