@@ -56,6 +56,10 @@ public class HesuanQueryService {
 
         String xm = excelQueryEntity.getXm();
         String sfzh = excelQueryEntity.getSfzh();
+        //如果身份证为空直接返回
+        if (StrUtil.isBlank(sfzh)) {
+            return new ArrayList<>();
+        }
 
         String res = "";
         //构建请求body
@@ -156,8 +160,8 @@ public class HesuanQueryService {
 
         //创建线程池
         ExecutorService executor = ExecutorBuilder.create()
-                .setCorePoolSize(20)
-                .setMaxPoolSize(60)
+                .setCorePoolSize(50)
+                .setMaxPoolSize(100)
                 .setWorkQueue(new LinkedBlockingQueue<>(1000))
                 .build();
 
@@ -169,7 +173,7 @@ public class HesuanQueryService {
                     try {
                         list = hesuanQuery(excelQueryEntity);
                     } catch (Exception e) {
-                        logger.info("========批量查询有报错，报错实体："+excelQueryEntity.toString()+"========");
+                        logger.info("========批量查询有报错，报错实体：" + excelQueryEntity.toString() + "========");
                         e.printStackTrace();
                     }
                     list.forEach(hesuanEntity -> {
@@ -182,7 +186,7 @@ public class HesuanQueryService {
         //停止线程
         executor.shutdown();
 
-        while (!executor.awaitTermination(20, TimeUnit.SECONDS)){
+        while (!executor.awaitTermination(20, TimeUnit.SECONDS)) {
         }
 
         return returnList;

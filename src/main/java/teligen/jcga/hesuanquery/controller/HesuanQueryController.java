@@ -44,7 +44,7 @@ public class HesuanQueryController {
         ModelAndView modelAndView = new ModelAndView("hesuan-query");
         modelAndView.addObject("sfzh", sfzh);
         modelAndView.addObject("xm", sfzh);
-        List<HesuanEntity> returnList;
+        List<HesuanEntity> returnList=new ArrayList<>();
 
         if (!StrUtil.isBlank(sfzh)) {
             try {
@@ -97,13 +97,14 @@ public class HesuanQueryController {
         // 核心
         file.transferTo(destFile);
         String url = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + "/excel" + currentDate + fileName;
-        System.out.println(String.format("上传成功，路径：%s", url));
+        logger.info("========"+String.format("文件上传成功，路径：%s", url)+"========");
 
         //文件上传保存到服务器成功后开始调用请求处理文件里面内容
         //读取excel文件
         ExcelReader excelReader = ExcelUtil.getReader(destFile);
         List<ExcelQueryEntity> list = excelReader.readAll(ExcelQueryEntity.class);
         List<HesuanEntity> hesuanEntityList = hesuanQueryService.getBatchHesuanQuery(list);
+        logger.info("========查询所有excel文件中数据成功，返回hesuanEntityList:"+hesuanEntityList.toString()+"========");
         //排序
         Collections.sort(hesuanEntityList);
 
@@ -125,6 +126,7 @@ public class HesuanQueryController {
         writer.write(hesuanEntityList, true);
         // 关闭writer，释放内存
         writer.close();
+        logger.info("========生成hesuanEntityList结果文件成功:"+hesuanEntityList.toString()+"========");
         return destFile.getName();
     }
 
