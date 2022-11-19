@@ -70,7 +70,7 @@ public class HesuanQueryController {
     }
 
     @PostMapping("/upload")
-    public String upload(@RequestParam("uploadFile") MultipartFile file, HttpServletRequest request, HttpServletResponse response) throws InterruptedException, IOException {
+    public String upload(@RequestParam("uploadFile") MultipartFile file, HttpServletRequest request) throws InterruptedException, IOException {
         if (file.isEmpty()) {
             return "文件为空";
         }

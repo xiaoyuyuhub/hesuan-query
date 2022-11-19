@@ -160,9 +160,9 @@ public class HesuanQueryService {
 
         //创建线程池
         ExecutorService executor = ExecutorBuilder.create()
-                .setCorePoolSize(50)
-                .setMaxPoolSize(100)
-                .setWorkQueue(new LinkedBlockingQueue<>(1000))
+                .setCorePoolSize(250)
+                .setMaxPoolSize(500)
+                .setWorkQueue(new LinkedBlockingQueue<>(10000))
                 .build();
 
         set.forEach(excelQueryEntity -> {
@@ -186,7 +186,7 @@ public class HesuanQueryService {
         //停止线程
         executor.shutdown();
 
-        while (!executor.awaitTermination(20, TimeUnit.SECONDS)) {
+        while (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
         }
 
         return returnList;
